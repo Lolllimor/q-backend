@@ -1,10 +1,10 @@
 {
   "kind": "collectionType",
-  "collectionName": "screens",
+  "collectionName": "graphics",
   "info": {
-    "singularName": "screen",
-    "pluralName": "screens",
-    "displayName": "Screen"
+    "singularName": "graphic",
+    "pluralName": "graphics",
+    "displayName": "Graphic"
   },
   "options": {
     "draftAndPublish": true
@@ -14,10 +14,13 @@
     "Title": {
       "type": "string"
     },
-    "Date": {
+    "Company": {
       "type": "string"
     },
-    "Image": {
+    "Tag": {
+      "type": "string"
+    },
+    "image": {
       "type": "media",
       "multiple": false,
       "allowedTypes": [
@@ -26,9 +29,6 @@
         "videos",
         "audios"
       ]
-    },
-    "url": {
-      "type": "string"
     }
   }
 }

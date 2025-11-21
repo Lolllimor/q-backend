@@ -32,6 +32,9 @@
         "videos",
         "audios"
       ]
+    },
+    "url": {
+      "type": "string"
     }
   }
 }

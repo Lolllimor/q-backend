@@ -458,6 +458,7 @@ export interface ApiCaseStudyCaseStudy extends Struct.CollectionTypeSchema {
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+    url: Schema.Attribute.String;
     Year: Schema.Attribute.String;
   };
 }
@@ -484,6 +485,37 @@ export interface ApiGalleryGallery extends Struct.CollectionTypeSchema {
     > &
       Schema.Attribute.Private;
     publishedAt: Schema.Attribute.DateTime;
+    Title: Schema.Attribute.String;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
+export interface ApiGraphicGraphic extends Struct.CollectionTypeSchema {
+  collectionName: 'graphics';
+  info: {
+    displayName: 'Graphic';
+    pluralName: 'graphics';
+    singularName: 'graphic';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    Company: Schema.Attribute.String;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    image: Schema.Attribute.Media<'images' | 'files' | 'videos' | 'audios'>;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::graphic.graphic'
+    > &
+      Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
+    Tag: Schema.Attribute.String;
     Title: Schema.Attribute.String;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
@@ -518,6 +550,7 @@ export interface ApiScreenScreen extends Struct.CollectionTypeSchema {
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+    url: Schema.Attribute.String;
   };
 }
 
@@ -1033,6 +1066,7 @@ declare module '@strapi/strapi' {
       'admin::user': AdminUser;
       'api::case-study.case-study': ApiCaseStudyCaseStudy;
       'api::gallery.gallery': ApiGalleryGallery;
+      'api::graphic.graphic': ApiGraphicGraphic;
       'api::screen.screen': ApiScreenScreen;
       'plugin::content-releases.release': PluginContentReleasesRelease;
       'plugin::content-releases.release-action': PluginContentReleasesReleaseAction;

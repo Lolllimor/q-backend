@@ -1,10 +1,10 @@
 {
   "kind": "collectionType",
-  "collectionName": "graphics",
+  "collectionName": "articles",
   "info": {
-    "singularName": "graphic",
-    "pluralName": "graphics",
-    "displayName": "Graphic"
+    "singularName": "article",
+    "pluralName": "articles",
+    "displayName": "Article"
   },
   "options": {
     "draftAndPublish": true
@@ -14,11 +14,26 @@
     "Title": {
       "type": "string"
     },
-    "Company": {
+    "Paragraph1": {
+      "type": "text"
+    },
+    "Paragraph2": {
+      "type": "text"
+    },
+    "Paragraph3": {
+      "type": "text"
+    },
+    "Paragraph4": {
+      "type": "text"
+    },
+    "Paragraph5": {
+      "type": "text"
+    },
+    "url": {
       "type": "string"
     },
-    "Tag": {
-      "type": "string"
+    "tag": {
+      "type": "text"
     },
     "image": {
       "type": "media",
@@ -30,7 +45,7 @@
         "audios"
       ]
     },
-    "url": {
+    "date": {
       "type": "string"
     }
   }

@@ -2,7 +2,6 @@ export default [
   'strapi::logger',
   'strapi::errors',
 
-  // SECURITY MUST COME FIRST
   {
     name: 'strapi::security',
     config: {
@@ -21,14 +20,12 @@ export default [
     },
   },
 
-  // THEN CORS
   {
     name: 'strapi::cors',
     config: {
-      enabled: true,
-      origin: ['*'], // allow localhost + production
-      headers: '*', // allow Authorization header => CRITICAL
+      origin: '*',
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+      headers: '*',
       credentials: true,
     },
   },

@@ -17,7 +17,7 @@ export default [
   {
     name: 'strapi::cors',
     config: {
-      origin: '*',
+      origin: ['http://localhost:3000', 'https://your-production-frontend.com'],
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
       headers: '*',
       credentials: true,

@@ -23,6 +23,12 @@
     },
     "Title": {
       "type": "string"
+    },
+    "width": {
+      "type": "string"
+    },
+    "height": {
+      "type": "string"
     }
   }
 }

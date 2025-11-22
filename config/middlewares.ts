@@ -2,24 +2,18 @@ export default [
   'strapi::logger',
   'strapi::errors',
 
+  // SECURITY — CSP disabled for now
   {
     name: 'strapi::security',
     config: {
-      contentSecurityPolicy: {
-        useDefaults: true,
-        directives: {
-          'connect-src': ["'self'", 'https:', '*'],
-          'img-src': ["'self'", 'data:', 'blob:', '*'],
-          'media-src': ["'self'", 'data:', 'blob:', '*'],
-          upgradeInsecureRequests: null,
-        },
-      },
+      contentSecurityPolicy: false,
       crossOriginEmbedderPolicy: false,
       crossOriginResourcePolicy: false,
       crossOriginOpenerPolicy: false,
     },
   },
 
+  // CORS
   {
     name: 'strapi::cors',
     config: {

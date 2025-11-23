@@ -22,18 +22,14 @@ export default [
       headers: [
         'Content-Type',
         'Authorization',
-        'X-Frame-Options',
         'Origin',
         'Accept',
-        'X-Requested-With',
         'Access-Control-Allow-Headers',
-        'Strapi-Transformer-Ignore',
-        'strapi-response-format',
       ],
-      credentials: true,
-      keepHeaderOnError: true, // Ensure CORS headers are sent even on error responses
-      preflightContinue: false, // Ensure preflight requests are handled by Strapi
-      optionsSuccessStatus: 204, // Return 204 for OPTIONS requests
+      credentials: false,
+      keepHeaderOnError: true, 
+      preflightContinue: false, 
+      optionsSuccessStatus: 204, 
     },
   },
 

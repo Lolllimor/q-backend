@@ -17,19 +17,22 @@ export default [
   {
     name: 'strapi::cors',
     config: {
-      origin: ['http://localhost:3000', 'https://your-production-frontend.com'],
+      origin: ['http://localhost:3000'],
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'],
       headers: [
         'Content-Type',
         'Authorization',
         'Origin',
         'Accept',
+        'X-Requested-With',
+        'Access-Control-Allow-Origin',
         'Access-Control-Allow-Headers',
+        'Access-Control-Allow-Methods',
       ],
-      credentials: false,
-      keepHeaderOnError: true, 
-      preflightContinue: false, 
-      optionsSuccessStatus: 204, 
+      credentials: true,
+      keepHeaderOnError: true,
+      preflightContinue: false,
+      optionsSuccessStatus: 204,
     },
   },
 

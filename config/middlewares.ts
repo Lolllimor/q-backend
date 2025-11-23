@@ -1,4 +1,4 @@
-export default [
+export default ({ env }) => [
   'strapi::logger',
   'strapi::errors',
 
@@ -17,23 +17,30 @@ export default [
   {
     name: 'strapi::cors',
     config: {
-      origin: ['http://localhost:3000'],
+      origin: '*',
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'],
-      headers: [
-        'Content-Type',
-        'Authorization',
-        'Origin',
-        'Accept',
-        'X-Requested-With',
-      ],
-      credentials: true,
-      keepHeaderOnError: true,
+      headers: ['Content-Type', 'Authorization', 'Origin', 'Accept'],
+      keepHeadersOnError: true,
     },
   },
 
   'strapi::poweredBy',
   'strapi::query',
-  'strapi::body',
+  {
+    name: 'strapi::body',
+    config: {
+      formLimit: '256mb', // Increase form data limit
+      jsonLimit: '256mb', // Increase JSON payload limit
+      textLimit: '256mb', // Increase text payload limit
+      formidable: {
+        maxFileSize: 200 * 1024 * 1024, // 200MB max file size
+        maxFieldsSize: 200 * 1024 * 1024, // 200MB max fields size
+        maxTotalFileSize: 200 * 1024 * 1024, // 200MB total files size
+        allowEmptyFiles: false,
+        minFileSize: 1, // 1 byte minimum
+      },
+    },
+  },
   'strapi::session',
   'strapi::favicon',
   'strapi::public',

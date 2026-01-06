@@ -1,5 +1,5 @@
-
-import crypto from 'crypto';
+'use strict';
+const crypto = require('crypto');
 
 module.exports = {
     async webhook(ctx) {

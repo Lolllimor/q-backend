@@ -609,16 +609,27 @@ export interface ApiOrderOrder extends Struct.CollectionTypeSchema {
     draftAndPublish: true;
   };
   attributes: {
-    amount: Schema.Attribute.BigInteger;
+    amount: Schema.Attribute.BigInteger & Schema.Attribute.Required;
+    artworkId: Schema.Attribute.BigInteger;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+    customerName: Schema.Attribute.String & Schema.Attribute.Required;
+    email: Schema.Attribute.Email & Schema.Attribute.Required;
+    failureReason: Schema.Attribute.Text;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::order.order'> &
       Schema.Attribute.Private;
-    paid: Schema.Attribute.Boolean;
+    paid: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
+    phone: Schema.Attribute.String;
     publishedAt: Schema.Attribute.DateTime;
-    reference: Schema.Attribute.String;
+    reference: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.Unique;
+    status: Schema.Attribute.Enumeration<['pending', 'paid', 'failed']> &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'pending'>;
+    transactionId: Schema.Attribute.String;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -676,6 +687,44 @@ export interface ApiTagTag extends Struct.CollectionTypeSchema {
       Schema.Attribute.Private;
     publishedAt: Schema.Attribute.DateTime;
     tag: Schema.Attribute.String;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
+export interface ApiTransactionLogTransactionLog
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'transaction_logs';
+  info: {
+    displayName: 'Transaction Log';
+    pluralName: 'transaction-logs';
+    singularName: 'transaction-log';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    errorMessage: Schema.Attribute.Text;
+    eventId: Schema.Attribute.String & Schema.Attribute.Unique;
+    eventType: Schema.Attribute.Enumeration<['create', 'verify', 'webhook']> &
+      Schema.Attribute.Required;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::transaction-log.transaction-log'
+    > &
+      Schema.Attribute.Private;
+    metadata: Schema.Attribute.JSON;
+    orderId: Schema.Attribute.BigInteger & Schema.Attribute.Required;
+    paystackEvent: Schema.Attribute.String;
+    publishedAt: Schema.Attribute.DateTime;
+    reference: Schema.Attribute.String & Schema.Attribute.Required;
+    status: Schema.Attribute.Enumeration<['success', 'failed', 'pending']> &
+      Schema.Attribute.DefaultTo<'pending'>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -1200,6 +1249,7 @@ declare module '@strapi/strapi' {
       'api::order.order': ApiOrderOrder;
       'api::screen.screen': ApiScreenScreen;
       'api::tag.tag': ApiTagTag;
+      'api::transaction-log.transaction-log': ApiTransactionLogTransactionLog;
       'plugin::content-releases.release': PluginContentReleasesRelease;
       'plugin::content-releases.release-action': PluginContentReleasesReleaseAction;
       'plugin::i18n.locale': PluginI18NLocale;

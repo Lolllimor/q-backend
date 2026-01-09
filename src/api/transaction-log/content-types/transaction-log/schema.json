@@ -1,0 +1,46 @@
+{
+  "kind": "collectionType",
+  "collectionName": "transaction_logs",
+  "info": {
+    "singularName": "transaction-log",
+    "pluralName": "transaction-logs",
+    "displayName": "Transaction Log"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "orderId": {
+      "type": "biginteger",
+      "required": true
+    },
+    "reference": {
+      "type": "string",
+      "required": true
+    },
+    "eventType": {
+      "type": "enumeration",
+      "enum": ["create", "verify", "webhook"],
+      "required": true
+    },
+    "paystackEvent": {
+      "type": "string"
+    },
+    "status": {
+      "type": "enumeration",
+      "enum": ["success", "failed", "pending"],
+      "default": "pending"
+    },
+    "eventId": {
+      "type": "string",
+      "unique": true
+    },
+    "metadata": {
+      "type": "json"
+    },
+    "errorMessage": {
+      "type": "text"
+    }
+  }
+}

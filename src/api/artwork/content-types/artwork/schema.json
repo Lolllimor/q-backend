@@ -44,6 +44,11 @@
         "videos",
         "audios"
       ]
+    },
+    "sold": {
+      "type": "boolean",
+      "default": false,
+      "required": false
     }
   }
 }

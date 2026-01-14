@@ -109,6 +109,22 @@ export default factories.createCoreService('api::order.order', ({ strapi }) => (
                 },
             });
 
+            // Mark artwork as sold if artworkId exists
+            if (order.artworkId) {
+                try {
+                    const artwork: any = await strapi.entityService.findOne('api::artwork.artwork', order.artworkId);
+
+                    if (artwork && !artwork.sold) {
+                        await strapi.entityService.update('api::artwork.artwork', order.artworkId, {
+                            data: { sold: true } as any,
+                        });
+                    }
+                } catch (artworkError: any) {
+                    console.error(`Failed to mark artwork ${order.artworkId} as sold:`, artworkError.message);
+                    // Don't throw - order is already paid, artwork update is secondary
+                }
+            }
+
             return {
                 alreadyPaid: false,
                 order: paidOrder,
@@ -151,6 +167,22 @@ export default factories.createCoreService('api::order.order', ({ strapi }) => (
                     status: 'paid',
                 },
             });
+
+            // Mark artwork as sold if artworkId exists
+            if (order.artworkId) {
+                try {
+                    const artwork: any = await strapi.entityService.findOne('api::artwork.artwork', order.artworkId);
+
+                    if (artwork && !artwork.sold) {
+                        await strapi.entityService.update('api::artwork.artwork', order.artworkId, {
+                            data: { sold: true } as any,
+                        });
+                    }
+                } catch (artworkError: any) {
+                    console.error(`Failed to mark artwork ${order.artworkId} as sold:`, artworkError.message);
+                    // Don't throw - order is already paid, artwork update is secondary
+                }
+            }
 
             return {
                 alreadyPaid: false,

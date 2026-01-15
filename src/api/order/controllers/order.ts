@@ -262,22 +262,51 @@ export default factories.createCoreController('api::order.order', ({ strapi }) =
             const reference = event.data.reference;
 
             try {
-                const orders = await strapi.entityService.findMany('api::order.order', {
-                    filters: { reference: reference },
-                    limit: 1,
-                });
+                // Use the service method which handles:
+                // 1. Order status update
+                // 2. Artwork sold status
+                // 3. Transaction logging (if added to service)
+                const orderService = strapi.service('api::order.order');
+                await orderService.updatePaymentStatusFromWebhook(reference);
 
-                if (orders.length > 0) {
-                    const order = orders[0];
-                    await strapi.entityService.update('api::order.order', order.id, {
-                        data: {
-                            paid: true,
-                        },
-                    });
-                    console.log(`Order ${order.id} updated to paid via webhook`);
+                // Also log the transaction via paystack service explicitly here if the service doesn't do it
+                // (Our updated service implementation didn't seem to include transaction logging, so let's keep it safe)
+                // Actually, the service implementation I saw earlier ONLY updated order and artwork.
+                // The transaction logging was in the Paystack controller.
+                // We should add transaction logging here to be safe.
+
+                const paystackService = strapi.service('api::paystack.paystack');
+                const order = await paystackService.getOrderByReference(reference);
+
+                if (order) {
+                    await paystackService.logTransaction(
+                        order.id,
+                        reference,
+                        'webhook',
+                        'success',
+                        { webhookEvent: event.event },
+                        undefined,
+                        event.event
+                    );
                 }
+
             } catch (err) {
                 console.error('Error updating order via webhook', err);
+                // Log failure
+                try {
+                    const paystackService = strapi.service('api::paystack.paystack');
+                    await paystackService.logTransaction(
+                        0,
+                        reference,
+                        'webhook',
+                        'failed',
+                        { webhookEvent: event.event },
+                        err.message,
+                        event.event
+                    );
+                } catch (logError) {
+                    console.error('Failed to log webhook error:', logError);
+                }
             }
         }
 

@@ -493,6 +493,7 @@ export interface ApiArtworkArtwork extends Struct.CollectionTypeSchema {
       Schema.Attribute.Private;
     Price: Schema.Attribute.BigInteger;
     publishedAt: Schema.Attribute.DateTime;
+    sold: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
     tags: Schema.Attribute.Relation<'oneToMany', 'api::tag.tag'>;
     Title: Schema.Attribute.String;
     updatedAt: Schema.Attribute.DateTime;

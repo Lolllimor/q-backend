@@ -16,6 +16,7 @@ export default factories.createCoreService('api::order.order', ({ strapi }) => (
         email: string;
         phone?: string;
         artworkId?: number;
+        artworkDocumentId?: string;
     }) {
         try {
             // Check if order with reference already exists (idempotency)
@@ -43,6 +44,7 @@ export default factories.createCoreService('api::order.order', ({ strapi }) => (
                     email: orderData.email,
                     phone: orderData.phone || '',
                     artworkId: orderData.artworkId || null,
+                    artworkDocumentId: orderData.artworkDocumentId || null,
                     status: 'pending',
                     paid: false,
                 },
@@ -116,7 +118,10 @@ export default factories.createCoreService('api::order.order', ({ strapi }) => (
 
                     if (artwork && !artwork.sold) {
                         await strapi.entityService.update('api::artwork.artwork', order.artworkId, {
-                            data: { sold: true } as any,
+                            data: {
+                                sold: true,
+                                BoughtBy: order.customerName
+                            } as any,
                         });
                     }
                 } catch (artworkError: any) {
@@ -175,7 +180,10 @@ export default factories.createCoreService('api::order.order', ({ strapi }) => (
 
                     if (artwork && !artwork.sold) {
                         await strapi.entityService.update('api::artwork.artwork', order.artworkId, {
-                            data: { sold: true } as any,
+                            data: {
+                                sold: true,
+                                BoughtBy: order.customerName
+                            } as any,
                         });
                     }
                 } catch (artworkError: any) {

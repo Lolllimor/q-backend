@@ -66,7 +66,7 @@
  * 
  *     try {
  *       // STEP 1: Create order on backend
- *       const reference = new Date().getTime().toString();
+ *       const reference = `art_${artworkData.id}_${new Date().getTime()}`;
  * 
  *       const createOrderResponse = await fetch(
  *         '/api/orders/create',
@@ -98,16 +98,29 @@
  *       setOrderData(orderResult.data);
  * 
  *       // STEP 2: Initialize Paystack with order info
+ *       // ====================================================
+ *       // 🚨 CRITICAL: Pass custom reference in custom_fields
+ *       // ====================================================
+ *       // Paystack generates its own reference (e.g., T619736757775957)
+ *       // But our backend uses our custom reference (e.g., art_4_1768538030067)
+ *       // We MUST pass our reference in metadata.custom_fields for webhook
  *       const config = {
  *         reference: orderResult.data.reference,
  *         email: customerData.email,
  *         amount: orderResult.data.amount,
  *         publicKey: process.env.NEXT_PUBLIC_PAYSTACK_KEY,
  *         metadata: {
- *           orderId: orderResult.data.orderId,    // ← NEW!
+ *           orderId: orderResult.data.orderId,
  *           artworkId: artworkData.id,
  *           artworkTitle: artworkData.title,
  *           customerName: customerData.firstName + ' ' + customerData.lastName,
+ *           custom_fields: [
+ *             {
+ *               display_name: "Order Reference",
+ *               variable_name: "reference",
+ *               value: orderResult.data.reference    // ← CRITICAL for webhook!
+ *             }
+ *           ]
  *         },
  *       };
  * 

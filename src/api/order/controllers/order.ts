@@ -12,7 +12,7 @@ export default factories.createCoreController('api::order.order', ({ strapi }) =
      */
     async create(ctx) {
         try {
-            const { reference, amount, customerName, email, phone, artworkId } = ctx.request.body;
+            const { reference, amount, customerName, email, phone, artworkId, artworkDocumentId } = ctx.request.body;
 
             console.log('🔵 CREATE ORDER ENDPOINT CALLED');
             console.log('  Reference:', reference);
@@ -40,6 +40,7 @@ export default factories.createCoreController('api::order.order', ({ strapi }) =
                 email,
                 phone,
                 artworkId,
+                artworkDocumentId,
             });
 
             console.log('  ✓ Order result:', { isNew, orderId: order.id });
@@ -259,32 +260,35 @@ export default factories.createCoreController('api::order.order', ({ strapi }) =
         const event = ctx.request.body;
 
         if (event && event.event === 'charge.success') {
-            const reference = event.data.reference;
+            // Extract the custom reference from metadata (as sent from frontend)
+            // Paystack uses their own reference, but we stored our custom reference in metadata
+            const paystackReference = event.data.reference;
+            const customReference = event.data.metadata?.custom_fields?.reference || paystackReference;
+
+            console.log('🔵 WEBHOOK RECEIVED');
+            console.log('  Paystack Reference:', paystackReference);
+            console.log('  Custom Reference:', customReference);
 
             try {
-                // Use the service method which handles:
-                // 1. Order status update
-                // 2. Artwork sold status
-                // 3. Transaction logging (if added to service)
+                // Use the custom reference to find our order
                 const orderService = strapi.service('api::order.order');
-                await orderService.updatePaymentStatusFromWebhook(reference);
-
-                // Also log the transaction via paystack service explicitly here if the service doesn't do it
-                // (Our updated service implementation didn't seem to include transaction logging, so let's keep it safe)
-                // Actually, the service implementation I saw earlier ONLY updated order and artwork.
-                // The transaction logging was in the Paystack controller.
-                // We should add transaction logging here to be safe.
+                await orderService.updatePaymentStatusFromWebhook(customReference);
 
                 const paystackService = strapi.service('api::paystack.paystack');
-                const order = await paystackService.getOrderByReference(reference);
+                const order = await paystackService.getOrderByReference(customReference);
 
                 if (order) {
+                    console.log('  ✓ Order found and updated:', order.id);
                     await paystackService.logTransaction(
                         order.id,
-                        reference,
+                        customReference,
                         'webhook',
                         'success',
-                        { webhookEvent: event.event },
+                        {
+                            webhookEvent: event.event,
+                            paystackReference,
+                            customReference
+                        },
                         undefined,
                         event.event
                     );
@@ -297,10 +301,15 @@ export default factories.createCoreController('api::order.order', ({ strapi }) =
                     const paystackService = strapi.service('api::paystack.paystack');
                     await paystackService.logTransaction(
                         0,
-                        reference,
+                        customReference,
                         'webhook',
                         'failed',
-                        { webhookEvent: event.event },
+                        {
+                            webhookEvent: event.event,
+                            paystackReference,
+                            customReference,
+                            error: err.message
+                        },
                         err.message,
                         event.event
                     );

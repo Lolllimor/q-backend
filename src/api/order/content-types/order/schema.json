@@ -26,7 +26,11 @@
     },
     "status": {
       "type": "enumeration",
-      "enum": ["pending", "paid", "failed"],
+      "enum": [
+        "pending",
+        "paid",
+        "failed"
+      ],
       "default": "pending",
       "required": true
     },
@@ -43,6 +47,9 @@
     },
     "artworkId": {
       "type": "biginteger"
+    },
+    "artworkDocumentId": {
+      "type": "string"
     },
     "transactionId": {
       "type": "string"

@@ -263,7 +263,17 @@ export default factories.createCoreController('api::order.order', ({ strapi }) =
             // Extract the custom reference from metadata (as sent from frontend)
             // Paystack uses their own reference, but we stored our custom reference in metadata
             const paystackReference = event.data.reference;
-            const customReference = event.data.metadata?.custom_fields?.reference || paystackReference;
+
+            // custom_fields is an array, need to find the reference field
+            let customReference = paystackReference;
+            if (event.data.metadata?.custom_fields && Array.isArray(event.data.metadata.custom_fields)) {
+                const referenceField = event.data.metadata.custom_fields.find(
+                    (field: any) => field.variable_name === 'reference'
+                );
+                if (referenceField?.value) {
+                    customReference = referenceField.value;
+                }
+            }
 
             console.log('🔵 WEBHOOK RECEIVED');
             console.log('  Paystack Reference:', paystackReference);

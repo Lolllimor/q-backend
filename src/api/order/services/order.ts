@@ -47,7 +47,7 @@ export default factories.createCoreService('api::order.order', ({ strapi }) => (
                     artworkDocumentId: orderData.artworkDocumentId || null,
                     status: 'pending',
                     paid: false,
-                },
+                } as any,
             });
 
             return {

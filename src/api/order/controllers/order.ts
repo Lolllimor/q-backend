@@ -84,100 +84,225 @@ export default factories.createCoreController('api::order.order', ({ strapi }) =
      * POST /api/orders/verify
      * Safe to call multiple times
      */
+
     async verify(ctx) {
-        try {
-            const { orderId, reference } = ctx.request.body;
-            const idempotencyKey = ctx.request.headers['idempotency-key'];
+    try {
+        const { orderId, reference, paystackReference } = ctx.request.body;
+        const idempotencyKey = ctx.request.headers['idempotency-key'];
 
-            if (!orderId || !reference) {
-                return ctx.badRequest('Missing required fields: orderId, reference');
+        const searchReference = reference || paystackReference;
+        if (!orderId || !reference) {
+            return ctx.badRequest('Missing required fields: orderId, reference');
+        }
+
+        const paystackService = strapi.service('api::paystack.paystack');
+        const orderService = strapi.service('api::order.order');
+
+        // Check if already processed (idempotency)
+        if (idempotencyKey) {
+            const existingLog = await strapi.db
+                .query('api::transaction-log.transaction-log')
+                .findOne({
+                    where: {
+                        eventId: idempotencyKey,
+                        status: 'success',
+                    },
+                });
+
+            if (existingLog) {
+                // Return cached successful response
+                const order = await strapi.entityService.findOne('api::order.order', orderId, {
+    populate: {
+        artworkDocumentId: true,
+    },
+});
+                return ctx.send({
+                    success: true,
+                    message: 'Payment already verified (cached)',
+                    isIdempotentReplay: true,
+                    data: {
+                        orderId: order.id,
+                        status: order.status,
+                        paid: order.paid,
+                    },
+                });
             }
+        }
 
-            const paystackService = strapi.service('api::paystack.paystack');
-            const orderService = strapi.service('api::order.order');
+        // Verify payment
+        const result = await orderService.verifyPaymentIdempotent(orderId, reference);
 
-            // Check if already processed (idempotency)
-            if (idempotencyKey) {
-                const existingLog = await strapi.db
-                    .query('api::transaction-log.transaction-log')
-                    .findOne({
-                        where: {
-                            eventId: idempotencyKey,
-                            status: 'success',
-                        },
-                    });
+        // If payment successful, mark artwork as sold
+        if (result.success || result.alreadyPaid) {
+            const order = await strapi.entityService.findOne('api::order.order', orderId, {
+                populate: ['artworkDocumentId'],
+            });
 
-                if (existingLog) {
-                    // Return cached successful response
-                    const order = await strapi.entityService.findOne('api::order.order', orderId);
-                    return ctx.send({
-                        success: true,
-                        message: 'Payment already verified (cached)',
-                        isIdempotentReplay: true,
+            if (order?.artworkDocumentId) {
+                console.log('  ✓ Updating artwork status to sold:', order.artworkDocumentId);
+                
+                try {
+                    await strapi.entityService.update('api::artwork.artwork', order.artworkDocumentId, {
                         data: {
-                            orderId: order.id,
-                            status: order.status,
-                            paid: order.paid,
-                        },
+                            status: 'sold',
+                            soldAt: new Date(),
+                            order: orderId, // Optional: reference back to order
+                        } as any,
                     });
+                    console.log('  ✓ Artwork marked as sold');
+                } catch (updateError) {
+                    console.error('  ❌ Failed to update artwork status:', updateError);
+                    // Don't fail the payment verification if artwork update fails
                 }
             }
 
-            // Verify payment
-            const result = await orderService.verifyPaymentIdempotent(orderId, reference);
-
             // Log successful verification
-            if (result.success || result.alreadyPaid) {
-                await paystackService.logTransaction(
-                    orderId,
-                    reference,
-                    'verify',
-                    'success',
-                    { alreadyPaid: result.alreadyPaid }
-                );
-            } else {
-                await paystackService.logTransaction(
-                    orderId,
-                    reference,
-                    'verify',
-                    'failed',
-                    { error: result.message },
-                    result.message
-                );
-            }
-
-            ctx.body = {
-                success: result.success || result.alreadyPaid,
-                message: result.message,
-                alreadyPaid: result.alreadyPaid,
-                data: {
-                    orderId: result.order.id,
-                    status: result.order.status,
-                    paid: result.order.paid,
-                },
-            };
-        } catch (error: any) {
-            console.error('Error verifying payment:', error);
-
-            // Log failed verification
-            const { orderId, reference } = ctx.request.body;
-            try {
-                const paystackService = strapi.service('api::paystack.paystack');
-                await paystackService.logTransaction(
-                    orderId,
-                    reference,
-                    'verify',
-                    'failed',
-                    {},
-                    error.message
-                );
-            } catch (logError) {
-                console.error('Failed to log transaction:', logError);
-            }
-
-            return ctx.internalServerError(error.message);
+            await paystackService.logTransaction(
+                orderId,
+                reference,
+                'verify',
+                'success',
+                { alreadyPaid: result.alreadyPaid, artworkUpdated: true }
+            );
+        } else {
+            await paystackService.logTransaction(
+                orderId,
+                reference,
+                'verify',
+                'failed',
+                { error: result.message },
+                result.message
+            );
         }
-    },
+
+        ctx.body = {
+            success: result.success || result.alreadyPaid,
+            message: result.message,
+            alreadyPaid: result.alreadyPaid,
+            data: {
+                orderId: result.order.id,
+                status: result.order.status,
+                paid: result.order.paid,
+            },
+        };
+    } catch (error: any) {
+        console.error('Error verifying payment:', error);
+
+        // Log failed verification
+        const { orderId, reference } = ctx.request.body;
+        try {
+            const paystackService = strapi.service('api::paystack.paystack');
+            await paystackService.logTransaction(
+                orderId,
+                reference,
+                'verify',
+                'failed',
+                {},
+                error.message
+            );
+        } catch (logError) {
+            console.error('Failed to log transaction:', logError);
+        }
+
+        return ctx.internalServerError(error.message);
+    }
+},
+    // async verify(ctx) {
+    //     try {
+    //         const { orderId, reference, paystackReference } = ctx.request.body;
+    //         const idempotencyKey = ctx.request.headers['idempotency-key'];
+
+
+    //         const searchReference = reference || paystackReference;
+    //         if (!orderId || !reference) {
+    //             return ctx.badRequest('Missing required fields: orderId, reference');
+    //         }
+
+    //         const paystackService = strapi.service('api::paystack.paystack');
+    //         const orderService = strapi.service('api::order.order');
+
+    //         // Check if already processed (idempotency)
+    //         if (idempotencyKey) {
+    //             const existingLog = await strapi.db
+    //                 .query('api::transaction-log.transaction-log')
+    //                 .findOne({
+    //                     where: {
+    //                         eventId: idempotencyKey,
+    //                         status: 'success',
+    //                     },
+    //                 });
+
+    //             if (existingLog) {
+    //                 // Return cached successful response
+    //                 const order = await strapi.entityService.findOne('api::order.order', orderId);
+    //                 return ctx.send({
+    //                     success: true,
+    //                     message: 'Payment already verified (cached)',
+    //                     isIdempotentReplay: true,
+    //                     data: {
+    //                         orderId: order.id,
+    //                         status: order.status,
+    //                         paid: order.paid,
+    //                     },
+    //                 });
+    //             }
+    //         }
+
+    //         // Verify payment
+    //         const result = await orderService.verifyPaymentIdempotent(orderId, reference);
+
+    //         // Log successful verification
+    //         if (result.success || result.alreadyPaid) {
+    //             await paystackService.logTransaction(
+    //                 orderId,
+    //                 reference,
+    //                 'verify',
+    //                 'success',
+    //                 { alreadyPaid: result.alreadyPaid }
+    //             );
+    //         } else {
+    //             await paystackService.logTransaction(
+    //                 orderId,
+    //                 reference,
+    //                 'verify',
+    //                 'failed',
+    //                 { error: result.message },
+    //                 result.message
+    //             );
+    //         }
+
+    //         ctx.body = {
+    //             success: result.success || result.alreadyPaid,
+    //             message: result.message,
+    //             alreadyPaid: result.alreadyPaid,
+    //             data: {
+    //                 orderId: result.order.id,
+    //                 status: result.order.status,
+    //                 paid: result.order.paid,
+    //             },
+    //         };
+    //     } catch (error: any) {
+    //         console.error('Error verifying payment:', error);
+
+    //         // Log failed verification
+    //         const { orderId, reference } = ctx.request.body;
+    //         try {
+    //             const paystackService = strapi.service('api::paystack.paystack');
+    //             await paystackService.logTransaction(
+    //                 orderId,
+    //                 reference,
+    //                 'verify',
+    //                 'failed',
+    //                 {},
+    //                 error.message
+    //             );
+    //         } catch (logError) {
+    //             console.error('Failed to log transaction:', logError);
+    //         }
+
+    //         return ctx.internalServerError(error.message);
+    //     }
+    // },
 
     /**
      * Legacy verify endpoint (kept for compatibility)
@@ -225,7 +350,7 @@ export default factories.createCoreController('api::order.order', ({ strapi }) =
                     data: {
                         paid: true,
                         status: 'paid',
-                    },
+                    } as any,
                 });
 
                 return {
@@ -289,6 +414,21 @@ export default factories.createCoreController('api::order.order', ({ strapi }) =
 
                 if (order) {
                     console.log('  ✓ Order found and updated:', order.id);
+                          if (order.artworkDocumentId) {
+                    console.log('  ✓ Updating artwork to sold:', order.artworkDocumentId);
+                    try {
+                        await strapi.entityService.update('api::artwork.artwork', order.artworkDocumentId, {
+                            data: {
+                                status: 'sold',
+                                soldAt: new Date(),
+                                order: order.id,
+                            } as any,
+                        });
+                    } catch (updateError) {
+                        console.error('  ❌ Failed to update artwork:', updateError);
+                    }
+                }
+                
                     await paystackService.logTransaction(
                         order.id,
                         customReference,

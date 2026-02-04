@@ -91,7 +91,7 @@ export default factories.createCoreService('api::order.order', ({ strapi }) => (
                     data: {
                         status: 'failed',
                         failureReason: 'Payment verification failed',
-                    },
+                    } as any,
                 });
 
                 return {
@@ -108,7 +108,7 @@ export default factories.createCoreService('api::order.order', ({ strapi }) => (
                     paid: true,
                     status: 'paid',
                     transactionId: verification.data?.id?.toString() || reference,
-                },
+                } as any,
             });
 
             // Mark artwork as sold if artworkId exists
@@ -170,10 +170,10 @@ export default factories.createCoreService('api::order.order', ({ strapi }) => (
                 data: {
                     paid: true,
                     status: 'paid',
-                },
+                } as any,
             });
 
-            // Mark artwork as sold if artworkId exists
+            // Mark artwork as sold if present
             if (order.artworkId) {
                 try {
                     const artwork: any = await strapi.entityService.findOne('api::artwork.artwork', order.artworkId);

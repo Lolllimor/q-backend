@@ -7,7 +7,7 @@
     "displayName": "Artwork"
   },
   "options": {
-    "draftAndPublish": true
+    "draftAndPublish": false
   },
   "pluginOptions": {},
   "attributes": {
@@ -49,6 +49,24 @@
       "type": "boolean",
       "default": false,
       "required": false
+    },
+    "status": {
+      "type": "enumeration",
+      "enum": [
+        "draft",
+        "published",
+        "sold"
+      ],
+      "default": "draft"
+    },
+    "soldAt": {
+      "type": "datetime"
+    },
+    "order": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::order.order",
+      "mappedBy": "artworkDocumentId"
     }
   }
 }

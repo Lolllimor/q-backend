@@ -23,7 +23,7 @@ export default ({ env }) => [
       ]
       ,
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'],
-      headers: ['Content-Type', 'Authorization', 'Origin', 'Accept'],
+      headers: ['Content-Type', 'Authorization', 'Origin', 'Accept', 'idempotency-key'],
       keepHeadersOnError: true,
     },
   },

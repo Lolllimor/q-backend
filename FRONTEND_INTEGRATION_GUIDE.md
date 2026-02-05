@@ -145,17 +145,22 @@
  *       }
  * 
  *       // STEP 1: Verify payment with backend
+ *       // ====================================================
+ *       // 🚨 CRITICAL: Use YOUR order reference, NOT Paystack's!
+ *       // ====================================================
+ *       // Paystack callback gives reference.reference (e.g., "T619736757775957")
+ *       // But your backend needs YOUR order reference (e.g., "art_4_1768538030067")
  *       const verifyResponse = await fetch(
  *         '/api/orders/verify',
  *         {
  *           method: 'POST',
  *           headers: {
  *             'Content-Type': 'application/json',
- *             'Idempotency-Key': `${orderData.orderId}_${reference.reference}`,
+ *             'Idempotency-Key': `${orderData.orderId}_${orderData.reference}`,
  *           },
  *           body: JSON.stringify({
  *             orderId: orderData.orderId,
- *             reference: reference.reference,
+ *             reference: orderData.reference,  // ← USE YOUR ORDER REFERENCE!
  *           }),
  *         }
  *       );

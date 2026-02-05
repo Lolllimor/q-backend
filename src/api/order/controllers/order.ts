@@ -144,13 +144,15 @@ export default factories.createCoreController('api::order.order', ({ strapi }) =
                     console.log('  ✓ Updating artwork status to sold:', artwork.documentId);
 
                     try {
-                        await strapi.entityService.update('api::artwork.artwork', artwork.documentId, {
+                        // Use strapi.documents for Strapi v5 - it properly handles documentId
+                        await strapi.documents('api::artwork.artwork').update({
+                            documentId: artwork.documentId,
                             data: {
                                 sold: true,
                                 status: 'sold',
                                 soldAt: new Date(),
                                 BoughtBy: order.customerName,
-                            } as any,
+                            },
                         });
                         console.log('  ✓ Artwork marked as sold');
                     } catch (updateError) {
